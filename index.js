@@ -34,11 +34,11 @@ app.get("/", function (req, res) {
 
 app.post("/upload", upload.single("file"), function (req, res) {
   if (!req.file) {
-    return res.redirect("/?message=" + encodeURIComponent("No file uploaded"));
+    return res.json({ message: "No file uploaded" });
   }
 
   const message = "File uploaded successfully";
-  res.redirect("/?message=" + encodeURIComponent(message));
+  res.json({ message });
 });
 
 app.get("/download/:filename", function (req, res) {

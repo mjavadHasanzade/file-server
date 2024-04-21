@@ -2,6 +2,19 @@
 <html>
   <head>
     <title>File List</title>
+    <style>
+      #progress-bar {
+        width: 100%;
+        height: 20px;
+        background-color: #f0f0f0;
+      }
+
+      #progress {
+        width: 0;
+        height: 100%;
+        background-color: #4caf50;
+      }
+    </style>
   </head>
   <body>
     <h1>Files in Public Folder</h1>
@@ -12,13 +25,53 @@
     </ul>
 
     <h2>Upload File</h2>
-    <form action="/upload" method="POST" enctype="multipart/form-data">
+    <form
+      id="upload-form"
+      action="/upload"
+      method="POST"
+      enctype="multipart/form-data"
+    >
       <input type="file" name="file" />
       <button type="submit">Upload</button>
     </form>
 
+    <div id="progress-bar">
+      <div id="progress"></div>
+    </div>
+
     <% if (message) { %>
     <p><%= message %></p>
     <% } %>
+
+    <script>
+      document
+        .getElementById("upload-form")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          var form = event.target;
+          var formData = new FormData(form);
+
+          var xhr = new XMLHttpRequest();
+          xhr.open(form.method, form.action);
+          xhr.upload.onprogress = function (event) {
+            var progress = (event.loaded / event.total) * 100;
+            document.getElementById("progress").style.width = progress + "%";
+          };
+          xhr.onload = function () {
+            if (xhr.status === 200) {
+              var response = JSON.parse(xhr.responseText);
+              if (response.message) {
+                var message = response.message;
+                window.location.href =
+                  "/?message=" + encodeURIComponent(message);
+              }
+            } else {
+              console.error("Error uploading file");
+            }
+          };
+          xhr.send(formData);
+        });
+    </script>
   </body>
 </html>
