@@ -46,17 +46,43 @@ app.get("/download/:filename", function (req, res) {
   const filePath = path.join(publicFolderPath, filename);
 
   if (fs.existsSync(filePath)) {
-    res.download(filePath, function (err) {
+    res.download(filePath, filename, function (err) {
       if (err) {
         console.error(err);
-        return res.status(500).send("Error downloading file");
+        if (!res.headersSent) {
+          // Check if headers have already been sent
+          return res.status(500).send("Error downloading file");
+        }
       }
     });
   } else {
-    res.status(404).send("File not found");
+    return res.status(404).send("File not found");
   }
 });
 
-app.listen(5000, function () {
-  console.log("Server created successfully on PORT 5000");
+const { networkInterfaces } = require("os");
+
+const nets = networkInterfaces();
+const results = Object.create(null); // Or just '{}', an empty object
+
+for (const name of Object.keys(nets)) {
+  for (const net of nets[name]) {
+    // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+    // 'IPv4' is in Node <= 17, from 18 it's a number 4 or 6
+    const familyV4Value = typeof net.family === "string" ? "IPv4" : 4;
+    if (net.family === familyV4Value && !net.internal) {
+      if (!results[name]) {
+        results[name] = [];
+      }
+      results[name].push(net.address);
+    }
+  }
+}
+
+console.log(results);
+
+app.listen(80, function () {
+  console.log(
+    `Server created successfully on http://${results["Wi-Fi"][0]}:80`
+  );
 });
